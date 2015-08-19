@@ -70,15 +70,19 @@ class MyFrame(wx.Frame):
         self.statusBar.SetStatusWidths([-1, -2, -3])
         self.statusBar.SetStatusText(u'server状态: running', 0)
         
+        self.totalRuleNum = 0
+        
     def OnClose(self, event):
         print 'In OnClose'
         event.Skip()
 
-    def configDialogDestroy(self, event):
-        ruleKey = '.'.join(rules[-1].keys()[0])
-        item = (len(rules), 1, ruleKey)
-        self.ruleGrid.addItem(item)
-        self.ruleGrid.ForceRefresh()
+    def configDialogDestroy(self, event): 
+        '''点击左边item添加rule时调用'''
+        if len(rules) > self.totalRuleNum:
+            ruleKey = '.'.join(rules[-1].keys()[0])
+            item = (len(rules), 1, ruleKey)
+            self.ruleGrid.addItem(item)
+            self.ruleGrid.ForceRefresh()
         print 'In OnDestroy'
         event.Skip()
     
@@ -226,7 +230,7 @@ class MyFrame(wx.Frame):
                                                                  rulepath=self.getItemPath(item), 
                                                                  itemvalue=itemValue, 
                                                                  rules=rules)
-            
+            self.totalRuleNum = len(rules)
             configRuleDialog.Bind(wx.EVT_CLOSE, self.OnClose)
             configRuleDialog.Bind(wx.EVT_WINDOW_DESTROY, self.configDialogDestroy)
             

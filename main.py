@@ -259,7 +259,8 @@ class MyFrame(wx.Frame):
                                                                  -1, 
                                                                  rulepath=self.getItemPath(item), 
                                                                  itemvalue=itemValue, 
-                                                                 rules=rules)
+                                                                 rules=rules,
+                                                                 isBool=( type(itemValue[0]) == type(True)) )
             self.totalRuleNum = len(rules)
             configRuleDialog.Bind(wx.EVT_CLOSE, self.configDialogClose)
             configRuleDialog.Bind(wx.EVT_WINDOW_DESTROY, self.configDialogDestroy)
@@ -322,7 +323,8 @@ class MyFrame(wx.Frame):
                                                                          -1, 
                                                                          rulepath=ruleKey, 
                                                                          itemvalue=itemValue, 
-                                                                         rules=rules)
+                                                                         rules=rules,
+                                                                         isBool= (type(itemValue[0]) == type(True)) )
                     configRuleDialog.ShowModal()
                     configRuleDialog.Destroy()
              
@@ -353,9 +355,17 @@ class MyFrame(wx.Frame):
         groupRules = self.timers[timerKey].rules
         for rule in groupRules:
             keyStr = '.'.join(rule.keys()[0])
+            (server, group, item) = key = rule.keys()[0]
             if self.ruleGrid.rules[keyStr]:
+                ruleTypeBool = rule.values()[0]['isbool']
+                print ruleTypeBool, key
+                currentValue = self.getItemValue(server, group, item)
+                print currentValue
+                if ruleTypeBool:
+                    (dang1, dang2) = rule.values()[0]['dang']
+                    if currentValue[0] != dang1:
+                        wx.LogMessage(dang2)
                 pass
-        wx.LogMessage(str(groupRules))
         pass
         
 if __name__ == '__main__':

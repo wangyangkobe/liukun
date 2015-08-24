@@ -15,6 +15,7 @@ class CreateRuleDialog(wx.Dialog):
         self.rulePath = kw.pop('rulepath')
         self.itemValue = kw.pop('itemvalue')
         self.rules = kw.pop('rules')
+        self.isBool = kw.pop('isBool')
         super(CreateRuleDialog, self).__init__(*args, **kw)      
         self.InitUI()
         self.SetSize((450, 270))
@@ -64,49 +65,68 @@ class CreateRuleDialog(wx.Dialog):
         btn.Bind(wx.EVT_BUTTON, lambda event, grid=grid: self.btnClick(event, grid))
         vbox.Add(btn,proportion=1,flag=(wx.TOP|wx.CENTRE), border=5)
         self.SetSizer(vbox)  
-        
+    
         for item in self.rules:
-            if item.keys()[0] == self.rulePath:
-                (lower1, lower2)    = item.values()[0]['lower']
-                (low1, low2)        = item.values()[0]['low']
-                (high1, high2)      = item.values()[0]['high']
-                (higher1, higher2)  = item.values()[0]['higher']
-                (dang1, dang2)      = item.values()[0]['dang']
-                interal             = item.values()[0]['interal']
+            if not item.values()[0]['isbool']:
+                if item.keys()[0] == self.rulePath:
+                    (lower1, lower2)    = item.values()[0]['lower']
+                    (low1, low2)        = item.values()[0]['low']
+                    (high1, high2)      = item.values()[0]['high']
+                    (higher1, higher2)  = item.values()[0]['higher']
+                    interal             = item.values()[0]['interal']
                 
-                grid.SetCellValue(0, 0, lower1)
-                grid.SetCellValue(0, 1, lower2)
-                grid.SetCellValue(1, 0, low1)
-                grid.SetCellValue(1, 1, low2)
-                grid.SetCellValue(2, 0, high1)
-                grid.SetCellValue(2, 1, high2)
-                grid.SetCellValue(3, 0, higher1)
-                grid.SetCellValue(3, 1, higher2)
+                    grid.SetCellValue(0, 0, lower1)
+                    grid.SetCellValue(0, 1, lower2)
+                    grid.SetCellValue(1, 0, low1)
+                    grid.SetCellValue(1, 1, low2)
+                    grid.SetCellValue(2, 0, high1)
+                    grid.SetCellValue(2, 1, high2)
+                    grid.SetCellValue(3, 0, higher1)
+                    grid.SetCellValue(3, 1, higher2)
                 
-                grid.SetCellValue(4, 0, u'真' if dang1 else u'假')
-                grid.SetCellValue(4, 1, dang2)
-                grid.SetCellValue(5, 0, interal)
+                    grid.SetCellValue(5, 0, interal)
+            else:
+                if item.keys()[0] == self.rulePath:
+                    (dang1, dang2)      = item.values()[0]['dang']
+                    interal             = item.values()[0]['interal']
+                    grid.SetCellValue(4, 0, u'真' if dang1 else u'假')
+                    grid.SetCellValue(4, 1, dang2)
+                    grid.SetCellValue(5, 0, interal)            
                 
     def btnClick(self, e, grid):
-        for row in range(5):
-            for col in range(2):
-                if grid.GetCellValue(row, col) == '':
-                    wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
-                    return
-                else:
-                    try:
-                        int(grid.GetCellValue(5, 0))
-                    except Exception, _e:
-                        wx.MessageBox(u'亲爱的用户，时间间隔需要整数！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
-                        return
-                            
         rule = {}
-        rule['lower']  = (grid.GetCellValue(0, 0), grid.GetCellValue(0, 1))
-        rule['low']    = (grid.GetCellValue(1, 0), grid.GetCellValue(1, 1))
-        rule['high']   = (grid.GetCellValue(2, 0), grid.GetCellValue(2, 1))
-        rule['higher'] = (grid.GetCellValue(3, 0), grid.GetCellValue(3, 1))
-        rule['dang']   = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
-        rule['interal']= grid.GetCellValue(5, 0)
+        if self.isBool:
+            for row in range(4):
+                for col in range(2):
+                    if grid.GetCellValue(row, col) != '':
+                        wx.MessageBox(u'亲爱的用户，该item的值为Bool类型，只能配置‘当’这一项！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
+                        return
+            if grid.GetCellValue(4, 1) == '':
+                wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
+                return
+                                        
+            rule['dang']   = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
+            rule['interal']= grid.GetCellValue(5, 0)
+            rule['isbool'] = True
+        else:            
+            for row in range(4):
+                for col in range(2):
+                    if grid.GetCellValue(row, col) == '':
+                        wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
+                        return
+            try:
+                int(grid.GetCellValue(5, 0))
+            except Exception, _e:
+                wx.MessageBox(u'亲爱的用户，时间间隔需要整数！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
+                return
+                    
+            rule['lower']  = (grid.GetCellValue(0, 0), grid.GetCellValue(0, 1))
+            rule['low']    = (grid.GetCellValue(1, 0), grid.GetCellValue(1, 1))
+            rule['high']   = (grid.GetCellValue(2, 0), grid.GetCellValue(2, 1))
+            rule['higher'] = (grid.GetCellValue(3, 0), grid.GetCellValue(3, 1))
+            rule['dang']   = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
+            rule['interal']= grid.GetCellValue(5, 0)
+            rule['isbool'] = False
         
         for item in self.rules:
             if item.keys()[0] == self.rulePath:

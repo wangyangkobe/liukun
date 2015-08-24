@@ -106,15 +106,15 @@ class RuleGrid(grd.Grid):
     def afterCheckBox(self, isChecked):
         print 'afterCheckBox', self.GridCursorRow, isChecked
         
-    def addItem(self, ruleItem):
+    def addItem(self, ruleItem, insertRowId):
         self.AppendRows()
-        self.SetCellValue(ruleItem.Id, 0, str(ruleItem.Id))
-        self.SetCellValue(ruleItem.Id, 1, '1' if ruleItem.validated else '0')
-        self.SetCellValue(ruleItem.Id, 2, ruleItem.strKey)
+        self.SetCellValue(insertRowId, 0, str(ruleItem.Id))
+        self.SetCellValue(insertRowId, 1, '1' if ruleItem.validated else '0')
+        self.SetCellValue(insertRowId, 2, ruleItem.strKey)
         print ruleItem
-        self.SetReadOnly(ruleItem.Id, 0, True)
+        self.SetReadOnly(insertRowId, 0, True)
         # self.SetReadOnly(number,1,True)
-        self.SetReadOnly(ruleItem.Id, 2, True)
+        self.SetReadOnly(insertRowId, 2, True)
     
         self.ForceRefresh()
 

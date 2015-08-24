@@ -89,7 +89,8 @@ class CreateRuleDialog(wx.Dialog):
             grid.SetCellValue(5, 0, interal)      
                 
     def btnClick(self, e, grid):
-        rule = Rule.Rule(len(self.rules) + 1, self.rulePath, True)
+        ruleId = 1 if len(self.rules) == 0 else (self.rules[-1].Id + 1)
+        rule = Rule.Rule(ruleId, self.rulePath, True)
         if self.isBool:
             for row in range(4):
                 for col in range(2):

@@ -96,11 +96,12 @@ class MyFrame(wx.Frame):
     def configDialogDestroy(self, event): 
         '''点击左边item添加rule时调用'''
         if len(rules) > self.totalRuleNum:
-            self.ruleGrid.addItem(rules[-1])
+            self.ruleGrid.addItem(rules[-1], len(rules))
             self.ruleGrid.ForceRefresh()
             self.scheldRule()
         print 'In OnDestroy'
         event.Skip()
+        
     def onCheckBoxSelected(self, row, isSelected):
         ruleItem = rules[row - 1]
         ruleItem.validated = isSelected
@@ -179,10 +180,7 @@ class MyFrame(wx.Frame):
         text.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_FRAMEBK))
         
         nameBtn.Bind(wx.EVT_BUTTON, lambda evt, textCtrl=text: self.projNameBtnClick(evt, textCtrl))
-        # text = wx.StaticText(self, -1, infoText)
-       
-        # text.SetFont(font)
-        
+                
         boxSizer.Add(nameBoxSizer, 0, wx.Left)
         boxSizer.Add(text, 0, wx.ALL | wx.EXPAND)
         border = wx.BoxSizer()

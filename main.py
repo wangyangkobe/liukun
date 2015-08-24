@@ -8,8 +8,8 @@ import string
 import CreateRuleDialog
 import RuleGrid
 import traceback
-
-rules= []
+        
+rules= [] #配置的rules
 
 opc = OpenOPC.client()
 #opc.set_trace(sys.stdout.write)
@@ -118,6 +118,16 @@ class MyFrame(wx.Frame):
         delBtn.Bind(wx.EVT_BUTTON, self.clickDelBtn)
         modBtn.Bind(wx.EVT_BUTTON, self.clickModifyBtn)
         
+        
+        logTextCtrl = wx.TextCtrl(logPanel, - 1, style=(wx.BORDER_NONE|wx.MULTIPLE|wx.TE_READONLY|wx.TE_AUTO_URL))
+        logBoxSizer = wx.BoxSizer(wx.VERTICAL)
+        logBoxSizer.AddSizer(logTextCtrl, 1, wx.EXPAND)
+        logPanel.SetSizer(logBoxSizer)
+        
+        logTarget = wx.LogTextCtrl(logTextCtrl)
+        logTarget.SetTimestamp("%Y-%m-%d %H:%M:%S")
+        wx.Log.SetActiveTarget(logTarget)
+       
         noteBook.AddPage(rulePanel, u"现有规则", select=True)
         noteBook.AddPage(logPanel,  u"日志")
         panelSizer.Add(noteBook, 1, wx.ALL|wx.EXPAND)
@@ -310,5 +320,7 @@ if __name__ == '__main__':
     #frame.CreateStatusBar()
     frame.Maximize(True)
     frame.Show(True)
+    
+    wx.LogMessage(u"PM 登录成功")
     #frame.ShowFullScreen(True, style=(wx.FULLSCREEN_NOTOOLBAR | wx.FULLSCREEN_NOSTATUSBAR |wx.FULLSCREEN_NOBORDER |wx.FULLSCREEN_NOCAPTION))
     app.MainLoop()   

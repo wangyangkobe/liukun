@@ -8,9 +8,11 @@ Created on 2015��8��18��
 import wx, wx.grid as grd
 
 class RuleGrid(grd.Grid):
-    def __init__(self, parent):
+    def __init__(self, parent, callback):
         grd.Grid.__init__(self, parent, -1)
-
+        
+        self.callback = callback
+        
         self.CreateGrid(1,3)
         self.RowLabelSize = 0
         #self.ColLabelSize = 20
@@ -46,6 +48,8 @@ class RuleGrid(grd.Grid):
         self.Bind(grd.EVT_GRID_CELL_LEFT_CLICK,self.onMouse)
         self.Bind(grd.EVT_GRID_SELECT_CELL,self.onCellSelected)
         self.Bind(grd.EVT_GRID_EDITOR_CREATED, self.onEditorCreated)
+        
+        self.rules = {}
 
     def onMouse(self,evt):
         if evt.GetRow() == 0 and evt.GetCol() ==1:
@@ -57,6 +61,12 @@ class RuleGrid(grd.Grid):
     def toggleCheckBox(self):
         try:
             self.cb.Value = not self.cb.Value
+        
+            selectedRow = self.GridCursorRow
+            if callable(self.callback):
+                self.callback(selectedRow, self.cb.Value)
+                address = self.GetCellValue(selectedRow, 2)
+                self.rules[address] = self.cb.Value
             self.afterCheckBox(self.cb.Value)
         except Exception, _e:
             pass
@@ -111,6 +121,7 @@ class RuleGrid(grd.Grid):
         #self.SetReadOnly(number,1,True)
         self.SetReadOnly(number,2,True)
         
+        self.rules[address] = bool(validate)
         self.ForceRefresh()
 
 class TestFrame(wx.Frame):

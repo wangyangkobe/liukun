@@ -17,7 +17,7 @@ class CreateRuleDialog(wx.Dialog):
         self.rules = kw.pop('rules')
         super(CreateRuleDialog, self).__init__(*args, **kw)      
         self.InitUI()
-        self.SetSize((450, 250))
+        self.SetSize((450, 270))
         self.SetTitle(u"规则配置")
     def InitUI(self): 
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -29,7 +29,7 @@ class CreateRuleDialog(wx.Dialog):
         vbox.Add(addressLabel, flag=(wx.ALL|wx.ALIGN_CENTER|wx.BOTTOM),border=5) 
         
         grid = wx.grid.Grid(self)
-        grid.CreateGrid(5, 2)
+        grid.CreateGrid(6, 2)
         grid.SetDefaultRowSize(25)
         grid.SetColLabelValue(0, u"值")
         grid.SetColLabelValue(1, u"报警信息")
@@ -38,15 +38,25 @@ class CreateRuleDialog(wx.Dialog):
         grid.SetRowLabelValue(1, u'低')
         grid.SetRowLabelValue(2, u'高')
         grid.SetRowLabelValue(3, u'高高')
-        grid.SetRowLabelValue(4, u'间隔时间')
-        grid.SetRowLabelSize(55)
+        grid.SetRowLabelValue(4, u'当')
+        grid.SetRowLabelValue(5, u'间隔时间(分)')
+        grid.SetRowLabelSize(70)
+        
+        #attr = wx.grid.GridCellAttr()
+        #attr.SetEditor(wx.grid.GridCellChoiceEditor())
+        #attr.SetRenderer(wx.grid.GridCellChoiceEditor(['5', '15', '30', '60'], True))
+        grid.SetCellEditor(4, 0, wx.grid.GridCellChoiceEditor([u'真', u'假'], True))
+        grid.SetCellValue(4, 0, u'假')
+        
+        grid.SetCellEditor(5, 0, wx.grid.GridCellChoiceEditor(['5', '15', '30', '60'], True))
+        grid.SetCellValue(5, 0, '5')
         
         grid.SetColSize(0, 50)
         grid.SetColSize(1, 300)
         
         grid.SetDefaultCellAlignment(wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
-        grid.SetCellValue(4, 1, u"当前温度：{}".format(self.itemValue[0]))
-        grid.SetReadOnly(4, 1, True)
+        grid.SetCellValue(5, 1, u"当前温度：{}".format(self.itemValue[0]))
+        grid.SetReadOnly(5, 1, True)
         
         vbox.Add(grid,proportion=1,flag=(wx.ALL|wx.ALIGN_CENTER))
         
@@ -61,6 +71,7 @@ class CreateRuleDialog(wx.Dialog):
                 (low1, low2)        = item.values()[0]['low']
                 (high1, high2)      = item.values()[0]['high']
                 (higher1, higher2)  = item.values()[0]['higher']
+                (dang1, dang2)      = item.values()[0]['dang']
                 interal             = item.values()[0]['interal']
                 
                 grid.SetCellValue(0, 0, lower1)
@@ -71,20 +82,31 @@ class CreateRuleDialog(wx.Dialog):
                 grid.SetCellValue(2, 1, high2)
                 grid.SetCellValue(3, 0, higher1)
                 grid.SetCellValue(3, 1, higher2)
-                grid.SetCellValue(4, 0, interal)
+                
+                grid.SetCellValue(4, 0, u'真' if dang1 else u'假')
+                grid.SetCellValue(4, 1, dang2)
+                grid.SetCellValue(5, 0, interal)
                 
     def btnClick(self, e, grid):
-        for row in range(4):
+        for row in range(5):
             for col in range(2):
                 if grid.GetCellValue(row, col) == '':
+                    wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
                     return
+                else:
+                    try:
+                        int(grid.GetCellValue(5, 0))
+                    except Exception, _e:
+                        wx.MessageBox(u'亲爱的用户，时间间隔需要整数！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
+                        return
                             
         rule = {}
         rule['lower']  = (grid.GetCellValue(0, 0), grid.GetCellValue(0, 1))
         rule['low']    = (grid.GetCellValue(1, 0), grid.GetCellValue(1, 1))
         rule['high']   = (grid.GetCellValue(2, 0), grid.GetCellValue(2, 1))
         rule['higher'] = (grid.GetCellValue(3, 0), grid.GetCellValue(3, 1))
-        rule['interal']= grid.GetCellValue(4, 0)
+        rule['dang']   = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
+        rule['interal']= grid.GetCellValue(5, 0)
         
         for item in self.rules:
             if item.keys()[0] == self.rulePath:
@@ -101,8 +123,8 @@ class CreateRuleDialog(wx.Dialog):
         self.Destroy()
 
 class MyFrame(wx.Frame):
-    def __init__(self, parent, id):
-        wx.Frame.__init__(self, parent, id)
+    def __init__(self, parent, ID):
+        wx.Frame.__init__(self, parent, ID)
         btn = wx.Button(self, -1)
         btn.Bind(wx.EVT_BUTTON, self.click)
     def click(self, e):

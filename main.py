@@ -8,8 +8,9 @@ import string
 import CreateRuleDialog
 import RuleGrid
 import traceback
-        
-rules= [] #配置的rules
+import itertools
+import Rule        
+rules  = [] #配置的rules
 
 opc = OpenOPC.client()
 #opc.set_trace(sys.stdout.write)
@@ -72,8 +73,23 @@ class MyFrame(wx.Frame):
         
         self.totalRuleNum = 0
         
-    def OnClose(self, event):
-        print 'In OnClose'
+        self.__close_callback = None
+        self.Bind(wx.EVT_CLOSE, self._when_closed)
+        self.timers = {}
+        
+    def register_close_callback(self, callback):
+        self.__close_callback = callback
+
+    def _when_closed(self, event):
+        doClose = True if not self.__close_callback else self.__close_callback()
+        if doClose:
+            print '_when_closed'
+            for _, timer in self.timers.items():
+                timer.Stop()
+            event.Skip()
+    
+    def configDialogClose(self, event):
+        print 'In configDialogClose'
         event.Skip()
 
     def configDialogDestroy(self, event): 
@@ -83,9 +99,13 @@ class MyFrame(wx.Frame):
             item = (len(rules), 1, ruleKey)
             self.ruleGrid.addItem(item)
             self.ruleGrid.ForceRefresh()
+            self.scheldRule()
         print 'In OnDestroy'
         event.Skip()
-    
+    def onCheckBoxSelected(self, row, isSelected):
+        self.scheldRule()
+        print 'onCheckBoxSelected: %s' % self.ruleGrid.rules
+        
     def configureRightPanel(self, panel):
         noteBook = wx.Notebook(panel, -1, style=wx.NB_TOP)
         panelSizer = wx.BoxSizer(wx.VERTICAL)
@@ -107,7 +127,7 @@ class MyFrame(wx.Frame):
         btnBoxSizer.Add(delBtn, 0, wx.ALL, 2)
         btnBoxSizer.Add(modBtn, 0, wx.ALL, 2)
         
-        self.ruleGrid = RuleGrid.RuleGrid(rulePanel)
+        self.ruleGrid = RuleGrid.RuleGrid(rulePanel, self.onCheckBoxSelected)
         
         stacticBoxSizer.Add(btnBoxSizer, 0, wx.ALL|wx.CENTER, 0)
         stacticBoxSizer.Add(self.ruleGrid, 1, wx.ALL|wx.CENTER, 5)
@@ -241,7 +261,7 @@ class MyFrame(wx.Frame):
                                                                  itemvalue=itemValue, 
                                                                  rules=rules)
             self.totalRuleNum = len(rules)
-            configRuleDialog.Bind(wx.EVT_CLOSE, self.OnClose)
+            configRuleDialog.Bind(wx.EVT_CLOSE, self.configDialogClose)
             configRuleDialog.Bind(wx.EVT_WINDOW_DESTROY, self.configDialogDestroy)
             
             configRuleDialog.ShowModal()
@@ -313,13 +333,38 @@ class MyFrame(wx.Frame):
     def projNameBtnClick(self, e, textCtrl):
         print "projNameBtnClick"
         textCtrl.SetValue("Hello")
-        pass      
+        pass
+    
+    def scheldRule(self):
+        for _, timer in self.timers.items():
+            timer.Stop()
+        self.timers = {}
+        
+        for timerKey, group in itertools.groupby(rules, lambda rule : rule.values()[0]['interal']):          
+            timer = wx.Timer(self, int(timerKey))
+            timer.Start(1000)             
+            timer.rules = list(group)
+            self.timers[timerKey] = timer  
+            
+            self.Bind(wx.EVT_TIMER, self.onTimerEvent, timer)
+        
+    def onTimerEvent(self, evt):
+        timerKey = str(evt.GetId())
+        groupRules = self.timers[timerKey].rules
+        for rule in groupRules:
+            keyStr = '.'.join(rule.keys()[0])
+            if self.ruleGrid.rules[keyStr]:
+                pass
+        wx.LogMessage(str(groupRules))
+        pass
+        
 if __name__ == '__main__':
     app = wx.App()
     frame = MyFrame(parent=None)
     #frame.CreateStatusBar()
     frame.Maximize(True)
     frame.Show(True)
+    frame.register_close_callback(lambda: True)
     
     wx.LogMessage(u"PM 登录成功")
     #frame.ShowFullScreen(True, style=(wx.FULLSCREEN_NOTOOLBAR | wx.FULLSCREEN_NOSTATUSBAR |wx.FULLSCREEN_NOBORDER |wx.FULLSCREEN_NOCAPTION))

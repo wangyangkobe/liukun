@@ -110,19 +110,14 @@ class CreateRuleDialog(wx.Dialog):
                     if grid.GetCellValue(row, col) == '':
                         wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
                         return
-            try:
-                int(grid.GetCellValue(5, 0))
-            except Exception, _e:
-                wx.MessageBox(u'亲爱的用户，时间间隔需要整数！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
-                return
              
-            rule.lower = (grid.GetCellValue(0, 0), grid.GetCellValue(0, 1))
-            rule.low = (grid.GetCellValue(1, 0), grid.GetCellValue(1, 1))
-            rule.high = (grid.GetCellValue(2, 0), grid.GetCellValue(2, 1))
-            rule.higher = (grid.GetCellValue(3, 0), grid.GetCellValue(3, 1))
-            rule.dang = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
+            rule.lower   = (grid.GetCellValue(0, 0), grid.GetCellValue(0, 1))
+            rule.low     = (grid.GetCellValue(1, 0), grid.GetCellValue(1, 1))
+            rule.high    = (grid.GetCellValue(2, 0), grid.GetCellValue(2, 1))
+            rule.higher  = (grid.GetCellValue(3, 0), grid.GetCellValue(3, 1))
+            rule.dang    = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
             rule.interal = grid.GetCellValue(5, 0)
-            rule.isBool = False  
+            rule.isBool  = False  
                     
         for item in self.rules:
             if item.key == self.rulePath:

@@ -122,11 +122,11 @@ class MyFrame(wx.Frame):
         
         btnBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
         
-        addBtn = wx.Button(rulePanel, -1, label=u"增加")
+        #addBtn = wx.Button(rulePanel, -1, label=u"增加")
         delBtn = wx.Button(rulePanel, -1, label=u"删除")        
         modBtn = wx.Button(rulePanel, -1, label=u"修改")  
                   
-        btnBoxSizer.Add(addBtn, 0, wx.ALL, 2)
+        #btnBoxSizer.Add(addBtn, 0, wx.ALL, 2)
         btnBoxSizer.Add(delBtn, 0, wx.ALL, 2)
         btnBoxSizer.Add(modBtn, 0, wx.ALL, 2)
         
@@ -137,7 +137,7 @@ class MyFrame(wx.Frame):
         
         rulePanel.SetSizer(stacticBoxSizer)
         
-        addBtn.Bind(wx.EVT_BUTTON, self.clickAddBtn)
+        #addBtn.Bind(wx.EVT_BUTTON, self.clickAddBtn)
         delBtn.Bind(wx.EVT_BUTTON, self.clickDelBtn)
         modBtn.Bind(wx.EVT_BUTTON, self.clickModifyBtn)
         
@@ -345,7 +345,7 @@ class MyFrame(wx.Frame):
         
         for timerKey, group in itertools.groupby(rules, lambda rule : rule.interal):          
             timer = wx.Timer(self, int(timerKey))
-            timer.Start(1000)             
+            timer.Start(1000 * 60)             
             timer.rules = list(group)
             self.timers[timerKey] = timer  
             
@@ -354,17 +354,56 @@ class MyFrame(wx.Frame):
     def onTimerEvent(self, evt):
         timerKey = str(evt.GetId())
         groupRules = self.timers[timerKey].rules
-        for ruleItem in groupRules:   
-            (server, group, item) = ruleItem.key
-            if ruleItem.validated:
-                currentValue = self.getItemValue(server, group, item)
-                if ruleItem.isBool:
-                    (dang1, dang2) = ruleItem.dang
-                    if currentValue[0] != dang1:
-                        wx.LogMessage(dang2)
+        for ruleItem in groupRules: 
+            if ruleItem.isBool:
+                self.handleBoolAlarm(ruleItem) 
+            else:
+                self.handleNormalAlarm(ruleItem)
+    
+    def handleBoolAlarm(self, ruleItem):
+        (server, group, item) = ruleItem.key
+        if ruleItem.validated:
+            currentValue = self.getItemValue(server, group, item)
+            (dang1, dang2) = ruleItem.dang
+            if (dang1 != currentValue) and (not ruleItem.alarm):
+                wx.LogMessage(u'发送报警信息: {}成功'.format(dang2))
+                ruleItem.alarm = 'dang'
+            else:
+                ruleItem.alarm = None
+                
+            for index in range(len(rules)):
+                if (rules[index]).strKey == ruleItem.strKey:
+                    rules[index] = ruleItem
+                    
+    def handleNormalAlarm(self, ruleItem):
+        (server, group, item) = ruleItem.key
+        if ruleItem.validated:
+            currentValue = self.getItemValue(server, group, item)
+            lower  = ruleItem.lower
+            low    = ruleItem.low
+            high   = ruleItem.high
+            higher = ruleItem.higher
+            
+            if currentValue > float(low[0]) and currentValue < float(high[0]):
                 pass
-        pass
-        
+            elif currentValue <= float(lower[0]) and ruleItem.alarm != 'lower':
+                wx.LogMessage(u'发送报警信息: {}成功'.format(ruleItem.lower[1]))
+                ruleItem.alarm = 'lower'
+            elif (currentValue > float(lower[0])) and (currentValue <= float(low[0])) and (ruleItem.alarm != 'low'):
+                wx.LogMessage(u'发送报警信息: {}成功'.format(ruleItem.low[1]))
+                ruleItem.alarm = 'low'
+            elif (currentValue > float(high[0])) and (currentValue <= float(higher[0])) and (ruleItem.alarm != 'high'):
+                wx.LogMessage(u'发送报警信息: {}成功'.format(ruleItem.high[1]))
+                ruleItem.alarm = 'high'
+            elif currentValue > float(higher[0]) and ruleItem.alarm != 'higher':
+                wx.LogMessage(u'发送报警信息: {}成功'.format(ruleItem.higher[1]))
+                ruleItem.alarm = 'higher'
+            else:
+                return    
+            for index in range(len(rules)):
+                if (rules[index]).strKey == ruleItem.strKey:
+                    rules[index] = ruleItem
+                
 if __name__ == '__main__':
     app = wx.App()
     frame = MyFrame(parent=None)

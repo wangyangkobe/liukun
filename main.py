@@ -255,7 +255,15 @@ class MyFrame(wx.Frame):
         if self.isLeafItem(item):
             (serverText, groupText, itemText) = self.getItemPath(item)
             itemValue = self.getItemValue(serverText, groupText, itemText)
-            ruleItem = Rule.Rule()
+            
+            ruleItem = None
+            for rule in rules:
+                if rule.key == (serverText, groupText, itemText):
+                    ruleItem = rule
+                    break
+                else:
+                    ruleItem = Rule.Rule()
+                      
             configRuleDialog = CreateRuleDialog.CreateRuleDialog(ruleItem,
                                                                  rulePath=self.getItemPath(item),
                                                                  itemValue=itemValue,
@@ -366,7 +374,7 @@ class MyFrame(wx.Frame):
             currentValue = self.getItemValue(server, group, item)[0]
             (dang1, dang2) = ruleItem.dang
             if (dang1 != currentValue) and (not ruleItem.alarm):
-                wx.LogMessage(u'发送报警信息: {} {}成功'.format(currentValue, dang2))
+                wx.LogMessage(u'发送报警信息: 当 :{} 当前值:{} {}成功'.format(dang1, currentValue, dang2))
                 ruleItem.alarm = 'dang'
             else:
                 ruleItem.alarm = None
@@ -379,6 +387,7 @@ class MyFrame(wx.Frame):
         (server, group, item) = ruleItem.key
         if ruleItem.validated:
             currentValue = float(self.getItemValue(server, group, item)[0])
+            print 'currentValue: {}'.format(currentValue)
             lower  = ruleItem.lower
             low    = ruleItem.low
             high   = ruleItem.high
@@ -387,16 +396,16 @@ class MyFrame(wx.Frame):
             if currentValue > float(low[0]) and currentValue < float(high[0]):
                 pass
             elif currentValue <= float(lower[0]) and ruleItem.alarm != 'lower':
-                wx.LogMessage(u'发送报警信息: lower {} {}成功'.format(currentValue, ruleItem.lower[1]))
+                wx.LogMessage(u'发送报警信息: 低低:{} 当前值:{} {}成功'.format(lower[0], currentValue, ruleItem.lower[1]))
                 ruleItem.alarm = 'lower'
             elif (currentValue > float(lower[0])) and (currentValue <= float(low[0])) and (ruleItem.alarm != 'low'):
-                wx.LogMessage(u'发送报警信息: low {} {}成功'.format(currentValue, ruleItem.low[1]))
+                wx.LogMessage(u'发送报警信息: 低:{} 当前值:{} {}成功'.format(low[0], currentValue, ruleItem.low[1]))
                 ruleItem.alarm = 'low'
             elif (currentValue > float(high[0])) and (currentValue <= float(higher[0])) and (ruleItem.alarm != 'high'):
-                wx.LogMessage(u'发送报警信息: high {} {}成功'.format(currentValue, ruleItem.high[1]))
+                wx.LogMessage(u'发送报警信息: 高:{} 当前值:{} {}成功'.format(high[0], currentValue, ruleItem.high[1]))
                 ruleItem.alarm = 'high'
             elif currentValue > float(higher[0]) and ruleItem.alarm != 'higher':
-                wx.LogMessage(u'发送报警信息: higher {} {}成功'.format(currentValue, ruleItem.higher[1]))
+                wx.LogMessage(u'发送报警信息: 高高:{} 当前值:{} {}成功'.format(higher[0], currentValue, ruleItem.higher[1]))
                 ruleItem.alarm = 'higher'
             else:
                 return    

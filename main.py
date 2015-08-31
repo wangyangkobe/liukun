@@ -10,7 +10,8 @@ import RuleGrid
 import traceback
 import itertools
 import Rule       
- 
+import Util
+
 rules = []  # 配置的rules
 
 opc = OpenOPC.client()
@@ -35,6 +36,10 @@ print opcItems
 
 computerName = socket.gethostname()
 print "computer name: {}".format(computerName)
+webHandle = Util.HandleUrl(computerName)
+webHandle.register()
+webHandle.clientinfo()
+webHandle.startHeartBeat()
 
 infoText = u"2、配置报警点。\n" + u"3、微信扫描右侧二维码并关注, 即可获取报警推送\n" + u"4、如果需要推送给其它同事，请将下面链接发送给他:" + u" http://wx.indyun.com/uidABCDEFGH\n" + u"5、任何问题或合作意向，请联系wxpush@indyu.com或18016061306"
 
@@ -186,9 +191,9 @@ class MyFrame(wx.Frame):
         border = wx.BoxSizer()
         border.Add(boxSizer, 1, wx.EXPAND | wx.ALL, 5)
         
-        bitmap = wx.Image(r'C:\Users\elqstux\Desktop\Python\WxPython\picture.jpg', wx.BITMAP_TYPE_JPEG).Scale(120, 120, wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
-        
-        staticBitMap = wx.StaticBitmap(panel, -1, bitmap)
+        #bitmap = wx.Image(webHandle.getImage(), wx.BITMAP_TYPE_JPEG).Scale(120, 120, wx.IMAGE_QUALITY_HIGH).ConvertToBitmap()
+        image = wx.ImageFromStream(webHandle.getImage()).Scale(120, 120, wx.IMAGE_QUALITY_HIGH)
+        staticBitMap = wx.StaticBitmap(panel, -1, image.ConvertToBitmap())
        
         border.Add(staticBitMap, 1, wx.EXPAND | wx.ALL, 5)
         panel.SetSizer(border)
@@ -372,6 +377,7 @@ class MyFrame(wx.Frame):
         (server, group, item) = ruleItem.key
         if ruleItem.validated:
             currentValue = self.getItemValue(server, group, item)[0]
+            print 'currentValue: {}'.format(currentValue)
             (dang1, dang2) = ruleItem.dang
             if (dang1 != currentValue) and (not ruleItem.alarm):
                 wx.LogMessage(u'发送报警信息: 当 :{} 当前值:{} {}成功'.format(dang1, currentValue, dang2))

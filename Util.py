@@ -5,6 +5,7 @@ import urllib2
 import json
 import threading
 import StringIO
+import urllib
 
 class HandleUrl(object):
     baseUrl = r"http://weimonitor.sundding.cn/index.php?"
@@ -27,18 +28,19 @@ class HandleUrl(object):
         url = "{}module=heartbeat&ID={}".format(self.baseUrl, self.id)
         response = urllib2.urlopen(url).read()
         print 'call heartbeat, res={}'.format(response)
-        try:
-            res = json.loads(response)
-            if res['STATUS'] == "OK":
-                pass
-            else:
-                pass
-        except Exception, _e:
-            pass
+        #try:
+        #    res = json.loads(response)
+        #    if res['STATUS'] == "OK":
+        #        pass
+        #    else:
+        #        pass
+        #except Exception, _e:
+        #    pass
 
     def message(self, message):
-        url = "{}module=message&ID={}&message={}".format(self.baseUrl, self.id, message)
-        response = urllib2.urlopen(url).read()
+        param = {'module':'message', 'ID': self.id, 'message': message }
+        print self.baseUrl + urllib.urlencode(param)
+        response = urllib2.urlopen(self.baseUrl + urllib.urlencode(param)).read()
         return  response
     
     def clientinfo(self):
@@ -74,3 +76,5 @@ if __name__ == '__main__':
     print handle.result
     print handle.ticket
     handle.startHeartBeat()
+    alarmStr = '发送报警信息: 高高:{} 当前值:{} {}成功'.format(20, 20, 20)
+    print handle.message(alarmStr)

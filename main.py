@@ -173,14 +173,14 @@ class MyFrame(wx.Frame):
         nameBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
         nameLabel = wx.StaticText(panel, -1, u"1、输入项目名称：")
         nameLabel.SetFont(font)
-        nameInput = wx.TextCtrl(panel, -1, computerName)
+        self.nameInput = wx.TextCtrl(panel, -1, computerName)
         nameBtn = wx.Button(panel, -1, label=u"确定")
         
         nameBoxSizer.Add(nameLabel, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL)
-        nameBoxSizer.Add(nameInput, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL)
+        nameBoxSizer.Add(self.nameInput, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL)
         nameBoxSizer.Add(nameBtn, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL)
         
-        text = wx.TextCtrl(panel, -1, infoText, style=(wx.BORDER_NONE | wx.MULTIPLE | wx.TE_READONLY | wx.TE_AUTO_URL))
+        text = wx.TextCtrl(panel, -1, webHandle.result, style=(wx.BORDER_NONE | wx.MULTIPLE | wx.TE_READONLY | wx.TE_AUTO_URL))
         text.SetFont(font)
         text.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_FRAMEBK))
         
@@ -348,7 +348,11 @@ class MyFrame(wx.Frame):
         
     def projNameBtnClick(self, e, textCtrl):
         print "projNameBtnClick"
-        textCtrl.SetValue("Hello")
+        webHandle = Util.HandleUrl(self.nameInput.GetValue())
+        webHandle.register()
+        webHandle.clientinfo()
+        webHandle.startHeartBeat()
+        textCtrl.SetValue(webHandle.result)
         pass
     
     def scheldRule(self):
@@ -380,7 +384,9 @@ class MyFrame(wx.Frame):
             print 'currentValue: {}'.format(currentValue)
             (dang1, dang2) = ruleItem.dang
             if (dang1 != currentValue) and (not ruleItem.alarm):
-                wx.LogMessage(u'发送报警信息: 当 :{} 当前值:{} {}成功'.format(dang1, currentValue, dang2))
+                alarmStr = '发送报警信息: 当 :{} 当前值:{} {}成功'.format(dang1, currentValue, dang2)
+                wx.LogMessage(unicode(alarmStr, "utf-8"))
+                webHandle.message(alarmStr)
                 ruleItem.alarm = 'dang'
             else:
                 ruleItem.alarm = None
@@ -399,22 +405,26 @@ class MyFrame(wx.Frame):
             high   = ruleItem.high
             higher = ruleItem.higher
             
+            alarmStr = ""
             if currentValue > float(low[0]) and currentValue < float(high[0]):
                 pass
             elif currentValue <= float(lower[0]) and ruleItem.alarm != 'lower':
-                wx.LogMessage(u'发送报警信息: 低低:{} 当前值:{} {}成功'.format(lower[0], currentValue, ruleItem.lower[1]))
+                alarmStr = '发送报警信息: 低低:{} 当前值:{} {}成功'.format(lower[0], currentValue, ruleItem.lower[1])
                 ruleItem.alarm = 'lower'
             elif (currentValue > float(lower[0])) and (currentValue <= float(low[0])) and (ruleItem.alarm != 'low'):
-                wx.LogMessage(u'发送报警信息: 低:{} 当前值:{} {}成功'.format(low[0], currentValue, ruleItem.low[1]))
+                alarmStr = '发送报警信息: 低:{} 当前值:{} {}成功'.format(low[0], currentValue, ruleItem.low[1])
                 ruleItem.alarm = 'low'
             elif (currentValue > float(high[0])) and (currentValue <= float(higher[0])) and (ruleItem.alarm != 'high'):
-                wx.LogMessage(u'发送报警信息: 高:{} 当前值:{} {}成功'.format(high[0], currentValue, ruleItem.high[1]))
+                alarmStr = '发送报警信息: 高:{} 当前值:{} {}成功'.format(high[0], currentValue, ruleItem.high[1])
                 ruleItem.alarm = 'high'
             elif currentValue > float(higher[0]) and ruleItem.alarm != 'higher':
-                wx.LogMessage(u'发送报警信息: 高高:{} 当前值:{} {}成功'.format(higher[0], currentValue, ruleItem.higher[1]))
+                alarmStr = '发送报警信息: 高高:{} 当前值:{} {}成功'.format(higher[0], currentValue, ruleItem.higher[1])
                 ruleItem.alarm = 'higher'
             else:
-                return    
+                return
+            if alarmStr != "":
+                webHandle.message(alarmStr)
+                wx.LogMessage(unicode(alarmStr, "utf-8"))    
             for index in range(len(rules)):
                 if (rules[index]).strKey == ruleItem.strKey:
                     rules[index] = ruleItem

@@ -6,6 +6,7 @@ import json
 import threading
 import StringIO
 import urllib
+from _winreg import QueryValue, OpenKey, HKEY_CURRENT_USER, SetValue, REG_SZ
 
 class HandleUrl(object):
     baseUrl = r"http://weimonitor.sundding.cn/index.php?"
@@ -14,11 +15,18 @@ class HandleUrl(object):
         self.thread = threading.Timer(1*60, self.heartbeat)
     
     def register(self):
+        key = OpenKey(HKEY_CURRENT_USER,r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced")       
         url = "{}module=register&p_name={}".format(self.baseUrl, self.projectName)
         response = urllib2.urlopen(url).read()
         try:
             res = json.loads(response)
-            self.id = res['ID']
+            try:
+                print "QueryValue: %s" % QueryValue(key, "ID")
+                self.id = QueryValue(key, "ID")
+            except Exception, _e:
+                self.id = res['ID']
+                SetValue(key, "ID", REG_SZ, self.id)
+                   
             self.p_name = res['P_NAME']
         except Exception, _e:
             self.id = ''
@@ -55,7 +63,10 @@ class HandleUrl(object):
             self.ticket = ''
             self.result = ''
             self.expire = ''
-            
+    def setpname(self, pname):
+        url = "{}module=setpname&ID={}&p_name={}".format(self.baseUrl, self.id, pname)
+        response = urllib2.urlopen(url).read()
+        print "setpname result: %s" % response        
     def startHeartBeat(self):
         self.thread.start()
     def stopHeadtBeat(self):

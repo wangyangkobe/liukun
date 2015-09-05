@@ -11,6 +11,9 @@ import traceback
 import itertools
 import Rule       
 import Util
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 rules = []  # 配置的rules
 
@@ -321,6 +324,7 @@ class MyFrame(wx.Frame):
             self.ruleGrid.ForceRefresh()
         except Exception, _e:
             pass
+        self.scheldRule()
         print 'clickDelBtn'
            
     def clickModifyBtn(self, e):
@@ -348,11 +352,7 @@ class MyFrame(wx.Frame):
         
     def projNameBtnClick(self, e, textCtrl):
         print "projNameBtnClick"
-        webHandle = Util.HandleUrl(self.nameInput.GetValue())
-        webHandle.register()
-        webHandle.clientinfo()
-        webHandle.startHeartBeat()
-        textCtrl.SetValue(webHandle.result)
+        webHandle.setpname(self.nameInput.GetValue())
         pass
     
     def scheldRule(self):
@@ -384,8 +384,9 @@ class MyFrame(wx.Frame):
             print 'currentValue: {}'.format(currentValue)
             (dang1, dang2) = ruleItem.dang
             if (dang1 != currentValue) and (not ruleItem.alarm):
-                alarmStr = '发送报警信息: 当 :{} 当前值:{} {}成功'.format(dang1, currentValue, dang2)
-                wx.LogMessage(unicode(alarmStr, "utf-8"))
+                #alarmStr = '{}成功 (当前值{} 当值{})'.format(dang2, str(currentValue), dang1)
+                alarmStr = "messange=" + dang2 + "成功 ,description=(当前值" + str(currentValue) + " 当值" + str(dang1) + ")"
+                wx.LogMessage(alarmStr)
                 webHandle.message(alarmStr)
                 ruleItem.alarm = 'dang'
             else:
@@ -409,16 +410,16 @@ class MyFrame(wx.Frame):
             if currentValue > float(low[0]) and currentValue < float(high[0]):
                 pass
             elif currentValue <= float(lower[0]) and ruleItem.alarm != 'lower':
-                alarmStr = '发送报警信息: 低低:{} 当前值:{} {}成功'.format(lower[0], currentValue, ruleItem.lower[1])
+                alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.lower[1], currentValue, lower[0])
                 ruleItem.alarm = 'lower'
             elif (currentValue > float(lower[0])) and (currentValue <= float(low[0])) and (ruleItem.alarm != 'low'):
-                alarmStr = '发送报警信息: 低:{} 当前值:{} {}成功'.format(low[0], currentValue, ruleItem.low[1])
+                alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.low[1], currentValue, low[0])
                 ruleItem.alarm = 'low'
             elif (currentValue > float(high[0])) and (currentValue <= float(higher[0])) and (ruleItem.alarm != 'high'):
-                alarmStr = '发送报警信息: 高:{} 当前值:{} {}成功'.format(high[0], currentValue, ruleItem.high[1])
+                alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.high[1], currentValue, high[0])
                 ruleItem.alarm = 'high'
             elif currentValue > float(higher[0]) and ruleItem.alarm != 'higher':
-                alarmStr = '发送报警信息: 高高:{} 当前值:{} {}成功'.format(higher[0], currentValue, ruleItem.higher[1])
+                alarmStr = 'messange={}成功,description= (当前值{}小于低低值{})'.format(ruleItem.higher[1], currentValue, higher[0])
                 ruleItem.alarm = 'higher'
             else:
                 return

@@ -14,7 +14,8 @@ class CreateRuleDialog(wx.Dialog):
         try:
             self.InitUI()
         except Exception, _e:
-            print traceback.format_exc() 
+            #print traceback.format_exc() 
+            pass
         self.SetSize((450, 270))
         self.SetTitle(u"规则配置")
 

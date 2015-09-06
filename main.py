@@ -384,10 +384,11 @@ class MyFrame(wx.Frame):
             print 'currentValue: {}'.format(currentValue)
             (dang1, dang2) = ruleItem.dang
             if (dang1 != currentValue) and (not ruleItem.alarm):
-                #alarmStr = '{}成功 (当前值{} 当值{})'.format(dang2, str(currentValue), dang1)
-                alarmStr = "messange=" + dang2 + "成功 ,description=(当前值" + str(currentValue) + " 当值" + str(dang1) + ")"
-                wx.LogMessage(alarmStr)
-                webHandle.message(alarmStr)
+                message     = dang2 + "成功 "
+                description = "(当前值" + str(currentValue) + " 当值" + str(dang1) + ")"
+                #alarmStr = "messange=" + dang2 + "成功 ,description=(当前值" + str(currentValue) + " 当值" + str(dang1) + ")"
+                response = webHandle.message(message, description)
+                response = wx.LogMessage(response)
                 ruleItem.alarm = 'dang'
             else:
                 ruleItem.alarm = None
@@ -406,26 +407,32 @@ class MyFrame(wx.Frame):
             high   = ruleItem.high
             higher = ruleItem.higher
             
-            alarmStr = ""
+            message = ""
+            description = ""
             if currentValue > float(low[0]) and currentValue < float(high[0]):
                 pass
             elif currentValue <= float(lower[0]) and ruleItem.alarm != 'lower':
-                alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.lower[1], currentValue, lower[0])
+                message     = '{}成功 '.format(ruleItem.lower[1])
+                description = '(当前值{}小于低低值{})'.format(currentValue, lower[0])
+                #alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.lower[1], currentValue, lower[0])
                 ruleItem.alarm = 'lower'
             elif (currentValue > float(lower[0])) and (currentValue <= float(low[0])) and (ruleItem.alarm != 'low'):
-                alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.low[1], currentValue, low[0])
+                message     = '{}成功 '.format(ruleItem.low[1])
+                description = '(当前值{}小于低低值{})'.format(currentValue, low[0])                
                 ruleItem.alarm = 'low'
             elif (currentValue > float(high[0])) and (currentValue <= float(higher[0])) and (ruleItem.alarm != 'high'):
-                alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.high[1], currentValue, high[0])
+                message     = '{}成功 '.format(ruleItem.high[1])
+                description = '(当前值{}小于低低值{})'.format(currentValue, high[0])   
                 ruleItem.alarm = 'high'
             elif currentValue > float(higher[0]) and ruleItem.alarm != 'higher':
-                alarmStr = 'messange={}成功,description= (当前值{}小于低低值{})'.format(ruleItem.higher[1], currentValue, higher[0])
+                message     = '{}成功 '.format(ruleItem.higher[1])
+                description = '(当前值{}小于低低值{})'.format(currentValue, higher[0])                   
                 ruleItem.alarm = 'higher'
             else:
                 return
-            if alarmStr != "":
-                webHandle.message(alarmStr)
-                wx.LogMessage(unicode(alarmStr, "utf-8"))    
+            if message != "":
+                response = webHandle.message(message, description)
+                wx.LogMessage(response)    
             for index in range(len(rules)):
                 if (rules[index]).strKey == ruleItem.strKey:
                     rules[index] = ruleItem

@@ -45,11 +45,12 @@ class HandleUrl(object):
         #except Exception, _e:
         #    pass
 
-    def message(self, message):
-        param = {'module':'message', 'ID': self.id, 'message': message }
+    def message(self, message, description):
+        param = {'module':'message', 'ID': self.id, 'message': message, 'description': description}
         print self.baseUrl + urllib.urlencode(param)
         response = urllib2.urlopen(self.baseUrl + urllib.urlencode(param)).read()
-        return  response
+        res = dict(json.loads(response))
+        return "status: " + res['STATUS'] + ", reason: " + res.get('REASON', '') + ", message: " + res['MESSAGE']
     
     def clientinfo(self):
         url = "{}module=clientinfo&ID={}".format(self.baseUrl, self.id)
@@ -82,10 +83,10 @@ if __name__ == '__main__':
     handle.register()
     print handle.id
     print handle.heartbeat()
-    print handle.message("fuck")
+    print handle.message("fuck", 'b')
     handle.clientinfo()
     print handle.result
     print handle.ticket
     handle.startHeartBeat()
     alarmStr = '发送报警信息: 高高:{} 当前值:{} {}成功'.format(20, 20, 20)
-    print handle.message(alarmStr)
+    print handle.message(alarmStr, 'a')

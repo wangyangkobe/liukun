@@ -23,11 +23,12 @@ class HandleUrl(object):
             try:
                 print "QueryValue: %s" % QueryValue(key, "ID")
                 self.id = QueryValue(key, "ID")
+                self.p_name = QueryValue(key, "P_NAME")
             except Exception, _e:
                 self.id = res['ID']
-                SetValue(key, "ID", REG_SZ, self.id)
-                   
-            self.p_name = res['P_NAME']
+                self.p_name = res['P_NAME']
+                SetValue(key, "ID", REG_SZ, self.id)                   
+                SetValue(key, "P_NAME", REG_SZ, self.p_name)
         except Exception, _e:
             self.id = ''
             self.p_name = ''    
@@ -50,7 +51,7 @@ class HandleUrl(object):
         print self.baseUrl + urllib.urlencode(param)
         response = urllib2.urlopen(self.baseUrl + urllib.urlencode(param)).read()
         res = dict(json.loads(response))
-        return "status: " + res['STATUS'] + ", reason: " + res.get('REASON', '') + ", message: " + res['MESSAGE']
+        return res['MESSAGE'] + ", " +  res['STATUS'] + ', ' +  res.get('REASON', '')
     
     def clientinfo(self):
         url = "{}module=clientinfo&ID={}".format(self.baseUrl, self.id)
@@ -67,11 +68,18 @@ class HandleUrl(object):
     def setpname(self, pname):
         url = "{}module=setpname&ID={}&p_name={}".format(self.baseUrl, self.id, pname)
         response = urllib2.urlopen(url).read()
-        print "setpname result: %s" % response        
+        res = json.loads(response)
+        if res['Result'] == 'OK':
+            key = OpenKey(HKEY_CURRENT_USER,r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced")
+            self.p_name = pname
+            SetValue(key, "P_NAME", REG_SZ, self.p_name)
+        print "setpname result: %s" % response
+               
     def startHeartBeat(self):
         self.thread.start()
     def stopHeadtBeat(self):
         self.thread.cancel()
+        
     def getImage(self):
         url = "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket={}".format(self.ticket)
         buf= urllib2.urlopen(url).read()

@@ -12,11 +12,23 @@ import itertools
 import Rule       
 import Util
 import sys
+import jsonpickle
+import os
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-rules = []  # 配置的rules
+ruleFile = os.path.join(os.path.dirname(os.path.realpath(__file__)), "rules.json")
+print "ruleFilePath: %s" % ruleFile
+try:
+    f = open(ruleFile, "r")
+    rules = jsonpickle.decode(f.read())
+except Exception, _e:
+    rules = []  # 配置的rules
 
+def saveRules(rules):
+    f = open(ruleFile, 'w')
+    f.write(jsonpickle.encode(rules))
+    
 opc = OpenOPC.client()
 # opc.set_trace(sys.stdout.write)
 opcServers = opc.servers()
@@ -30,7 +42,7 @@ for server in opc.servers():
     groups = {}
     for group in opc.list():
         items = []
-        for item in opc.list(group):
+        for item in opc.list(group + '.*', recursive=True):
             items.append(item)
         groups[group] = items
     opcItems[server] = groups
@@ -86,6 +98,10 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self._when_closed)
         self.timers = {}
         
+        for index in range(len(rules)):
+            self.ruleGrid.addItem(rules[index], index+1)
+            self.ruleGrid.ForceRefresh()
+            
     def register_close_callback(self, callback):
         self.__close_callback = callback
 
@@ -93,6 +109,7 @@ class MyFrame(wx.Frame):
         doClose = True if not self.__close_callback else self.__close_callback()
         if doClose:
             print '_when_closed'
+            webHandle.thread.cancel()
             for _, timer in self.timers.items():
                 timer.Stop()
             event.Skip()
@@ -107,6 +124,7 @@ class MyFrame(wx.Frame):
             self.ruleGrid.addItem(rules[-1], len(rules))
             self.ruleGrid.ForceRefresh()
             self.scheldRule()
+            saveRules(rules)
         print 'In OnDestroy'
         event.Skip()
         
@@ -176,7 +194,7 @@ class MyFrame(wx.Frame):
         nameBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
         nameLabel = wx.StaticText(panel, -1, u"1、输入项目名称：")
         nameLabel.SetFont(font)
-        self.nameInput = wx.TextCtrl(panel, -1, computerName)
+        self.nameInput = wx.TextCtrl(panel, -1, webHandle.p_name)
         nameBtn = wx.Button(panel, -1, label=u"确定")
         
         nameBoxSizer.Add(nameLabel, 1, wx.ALL | wx.ALIGN_CENTER_VERTICAL)
@@ -203,10 +221,9 @@ class MyFrame(wx.Frame):
         # panel.SetSizerAndFit(border)
     
     def configureLeftPanel(self, panel):
-        panel.Bind(wx.EVT_SIZE, self.onSize)
+        #panel.Bind(wx.EVT_SIZE, self.onSize)
         tID = wx.NewId()
         self.tree = wx.TreeCtrl(panel, tID, style=wx.TR_HAS_BUTTONS)
-
         isz = (16, 16)
         il = wx.ImageList(isz[0], isz[1])
         fldridx = il.Add(wx.ArtProvider_GetBitmap(wx.ART_FOLDER, wx.ART_OTHER, isz))
@@ -226,7 +243,6 @@ class MyFrame(wx.Frame):
         self.tree.SetPyData(self.root, None)
         self.tree.SetItemImage(self.root, fldridx, wx.TreeItemIcon_Normal)
         self.tree.SetItemImage(self.root, fldropenidx, wx.TreeItemIcon_Expanded)
-
 
         for server in opcItems.keys():
             child = self.tree.AppendItem(self.root, server)
@@ -249,7 +265,25 @@ class MyFrame(wx.Frame):
         self.tree.Expand(self.root)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self.tree)
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.treeLeafDoubleClick, self.tree)
+        self.Bind(wx.EVT_TREE_ITEM_MENU, self.showPopMenu, self.tree)
+        
+        sizer = wx.BoxSizer()
+        sizer.Add(self.tree, 1, wx.EXPAND)
+        panel.SetSizer(sizer)
     
+    def showPopMenu(self, event):
+        print 'showPopMenu'
+        popupmenu = wx.Menu()
+        item = popupmenu.Append(-1, u"刷新")
+        self.Bind(wx.EVT_MENU, self.OnPopupItemSelected, item)
+        event.GetEventObject().PopupMenu(popupmenu)
+    def OnPopupItemSelected(self, event):
+        print 'OnPopupItemSelected'
+        self.tree.Refresh()
+        self.tree.CollapseAll()
+        self.tree.Expand(self.root)
+        self.tree.Update()
+            
     def onSelChanged(self, event):
         item = event.GetItem()
         if self.isLeafItem(item) and self.getItemPath(item):
@@ -290,13 +324,13 @@ class MyFrame(wx.Frame):
         return item and (self.tree.GetChildrenCount(item) == 0)
     
     def getItemPath(self, item):
-        itemText = str(self.tree.GetItemText(item))
-        if string.index(itemText, '.') != -1:
-            group = self.tree.GetItemParent(item)
-            server = self.tree.GetItemParent(group)
-            return (self.tree.GetItemText(server), self.tree.GetItemText(group), itemText)
-        else:
-            return None
+        pieces = []
+        while self.tree.GetItemParent(item):
+            piece = self.tree.GetItemText(item)
+            pieces.insert(0, piece)
+            item = self.tree.GetItemParent(item)
+        
+        return tuple(pieces)
         
     def getItemValue(self, server, group, item):
             opc.close()
@@ -383,9 +417,11 @@ class MyFrame(wx.Frame):
             currentValue = self.getItemValue(server, group, item)[0]
             print 'currentValue: {}'.format(currentValue)
             (dang1, dang2) = ruleItem.dang
+            if len(dang2) == 0: #该规则未配置
+                return
             if (dang1 != currentValue) and (not ruleItem.alarm):
                 message     = dang2 + "成功 "
-                description = "(当前值" + str(currentValue) + " 当值" + str(dang1) + ")"
+                description = "当前值" + str(currentValue) + " 当值" + str(dang1) + ""
                 #alarmStr = "messange=" + dang2 + "成功 ,description=(当前值" + str(currentValue) + " 当值" + str(dang1) + ")"
                 response = webHandle.message(message, description)
                 response = wx.LogMessage(response)
@@ -413,20 +449,20 @@ class MyFrame(wx.Frame):
                 pass
             elif currentValue <= float(lower[0]) and ruleItem.alarm != 'lower':
                 message     = '{}成功 '.format(ruleItem.lower[1])
-                description = '(当前值{}小于低低值{})'.format(currentValue, lower[0])
+                description = '当前值{}小于低低值{}'.format(currentValue, lower[0])
                 #alarmStr = 'messange={}成功 ,description=(当前值{}小于低低值{})'.format(ruleItem.lower[1], currentValue, lower[0])
                 ruleItem.alarm = 'lower'
             elif (currentValue > float(lower[0])) and (currentValue <= float(low[0])) and (ruleItem.alarm != 'low'):
                 message     = '{}成功 '.format(ruleItem.low[1])
-                description = '(当前值{}小于低低值{})'.format(currentValue, low[0])                
+                description = '当前值{}小于低低值{}'.format(currentValue, low[0])                
                 ruleItem.alarm = 'low'
             elif (currentValue > float(high[0])) and (currentValue <= float(higher[0])) and (ruleItem.alarm != 'high'):
                 message     = '{}成功 '.format(ruleItem.high[1])
-                description = '(当前值{}小于低低值{})'.format(currentValue, high[0])   
+                description = '当前值{}小于低低值{}'.format(currentValue, high[0])   
                 ruleItem.alarm = 'high'
             elif currentValue > float(higher[0]) and ruleItem.alarm != 'higher':
                 message     = '{}成功 '.format(ruleItem.higher[1])
-                description = '(当前值{}小于低低值{})'.format(currentValue, higher[0])                   
+                description = '当前值{}小于低低值{}'.format(currentValue, higher[0])                   
                 ruleItem.alarm = 'higher'
             else:
                 return

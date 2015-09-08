@@ -93,25 +93,10 @@ class CreateRuleDialog(wx.Dialog):
         ruleId = 1 if len(self.rules) == 0 else (self.rules[-1].Id + 1)
         rule = Rule.Rule(ruleId, self.rulePath, True)
         if self.isBool:
-            for row in range(4):
-                for col in range(2):
-                    if grid.GetCellValue(row, col) != '':
-                        wx.MessageBox(u'亲爱的用户，该item的值为Bool类型，只能配置‘当’这一项！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
-                        return
-            if grid.GetCellValue(4, 1) == '':
-                wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
-                return
-            
             rule.dang = (grid.GetCellValue(4, 0) == u'真', grid.GetCellValue(4, 1))
             rule.interal = grid.GetCellValue(5, 0)
             rule.isBool = True                            
         else:            
-            for row in range(4):
-                for col in range(2):
-                    if grid.GetCellValue(row, col) == '':
-                        wx.MessageBox(u'亲爱的用户，您的规则没有配置完整！', u'提示', wx.OK | wx.ICON_EXCLAMATION)
-                        return
-             
             rule.lower   = (grid.GetCellValue(0, 0), grid.GetCellValue(0, 1))
             rule.low     = (grid.GetCellValue(1, 0), grid.GetCellValue(1, 1))
             rule.high    = (grid.GetCellValue(2, 0), grid.GetCellValue(2, 1))

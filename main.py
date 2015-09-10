@@ -297,7 +297,8 @@ class MyFrame(wx.Frame):
         if self.isLeafItem(item):
             (serverText, groupText, itemText) = self.getItemPath(item)
             itemValue = self.getItemValue(serverText, groupText, itemText)
-            
+            if itemValue == None:
+                return
             ruleItem = None
             for rule in rules:
                 if rule.key == (serverText, groupText, itemText):
@@ -335,7 +336,10 @@ class MyFrame(wx.Frame):
     def getItemValue(self, server, group, item):
             opc.close()
             opc.connect(server, 'localhost')
-            return opc.read(item, group=group, sync=True, timeout=5000*2)
+            try:
+                return opc.read(item, group=group, sync=True, timeout=5000*2)
+            except Exception, _e:
+                None
                      
     def onSize(self, event):
         w, h = self.GetClientSizeTuple()
